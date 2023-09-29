@@ -1,0 +1,28 @@
+name:CI
+env:
+  PKG_NAME: libusb-1.0-1.0.24
+on:
+    push:
+      branches: [ "main" ]
+jobs:
+  debian-arm_build:
+    runs-on: ubuntu-latest
+    name: Build on ${{ matrix.arch }}
+    strategy:
+      matrix:
+        include:
+          - arch: aarch64
+            distro: ubuntu_latest
+    steps:
+      - name: Fetch Patch Repository
+        uses: actions/checkout@v2
+      - name: Build Debian packages
+        uses: jtdor/build-deb-action@v1.7.0
+        with:
+          host-arch: ${{ matrix.arch }}
+          before-build-hook: |
+            dget http://deb.debian.org/debian/pool/main/libu/libusb-1.0/libusb-1.0_1.0.24-3.dsc
+            patch -d ${{ env.PKG_NAME }} -t -p1 -R < /data/*.patch
+            cd libusb-1.0_1.0.24-3
+          extra-build-deps: devscripts pkg-config docbook docbook-dsssl libudev-dev doxygen debhelper build-essential ${{ matrix.extra_dep }}
+          extra-docker-args: -v type=bind,source=${{github.action_path}},destination=/data
