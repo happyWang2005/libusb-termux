@@ -13,6 +13,7 @@ jobs:
         include:
           - arch: aarch64
             distro: ubuntu_latest
+            extra_dep: ""
     steps:
       - name: Fetch Patch Repository
         uses: actions/checkout@v2
