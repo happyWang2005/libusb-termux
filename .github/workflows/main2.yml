@@ -20,19 +20,17 @@ jobs:
 
     steps:
       - name: Fetch Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
           
       - name: Cache Primes
         id: cache-primes
         uses: actions/cache@v3
 
       - name: Add architecture for dpkg if needed
-        run: ${{ matrix.arch != 'x86_64' || matrix.arch != 'x86' }} && dpkg --add-architecture ${{ matrix.arch }}
+        run: ${{ matrix.arch != 'amd64' || matrix.arch != 'i386' }} && dpkg --add-architecture ${{ matrix.arch }}
 
       - name: Prepare for build
-        uses: ConorMacBride/install-package@v1 
-        with:
-          apt: ${{ env.DEP }} ${{ matrix.extra_dep }}
+        run: apt install ${{ env.DEP }} ${{ matrix.extra_dep }}
 
 
       - name: Fetch application source
