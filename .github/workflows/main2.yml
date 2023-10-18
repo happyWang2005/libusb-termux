@@ -1,9 +1,12 @@
 name: CI
 env:
     DEV_NAME: CI-libusb
+    CROSS: ${{matrix.arch != 'amd64' || matrix.arch != 'i386'}}
     DEP: sudo devscripts debian-keyring pkg-config docbook docbook-dsssl libudev-dev doxygen debhelper build-essential tree
     FetchSource: dget http://deb.debian.org/debian/pool/main/libu/libusb-1.0/libusb-1.0_1.0.24-3.dsc
     PKG_NAME: libusb-1.0
+    CONFIG_SITE: /etc/dpkg-cross/cross-config.amd64
+      #DEB_BUILD_OPTIONS: nocheck
 on:
     push:
       branches: [ "main" ]
@@ -27,7 +30,7 @@ jobs:
         uses: actions/cache@v3
 
       - name: Add architecture for dpkg if needed
-        run: ${{ matrix.arch != 'amd64' || matrix.arch != 'i386' }} && dpkg --add-architecture ${{ matrix.arch }}
+        run: ${{ env.CROSS }} && dpkg --add-architecture ${{ matrix.arch }}
 
       - name: Prepare for build
         run: apt update && apt install ${{ env.DEP }} ${{ matrix.extra_dep }} -y
@@ -38,12 +41,15 @@ jobs:
 
       - name: Apply patch
         run: |
-          patch -d ${{ env.PKG_NAME }}* -t -p1 -R < *.diff
+          ls
+          echo "-------------------------------------------"
+          patch -d ${{ env.PKG_NAME }}* -t -p1 -R < ./*.diff
 
       - name: Build
         run: |
                 cd libusb*/
-                dpkg-buildpackage
+                ${{ env.CROSS }} && set -- $@ -aarmhf -Pcross
+                dpkg-buildpackage $@
                 cd ../
 
       - name: Generate files list
