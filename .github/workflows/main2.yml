@@ -38,7 +38,7 @@ jobs:
 
       - name: Apply patch
         run: |
-          patch -d ${{ env.PKG_NAME }}* -t -p1 -R < *.patch
+          patch -d ${{ env.PKG_NAME }}* -t -p1 -R < *.diff
 
       - name: Build
         run: |
