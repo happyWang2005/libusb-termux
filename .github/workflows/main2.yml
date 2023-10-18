@@ -41,14 +41,14 @@ jobs:
 
       - name: Apply patch
         run: |
-          ls
+          tree
           echo "-------------------------------------------"
           patch -d libusb-1.0_${{VERSION}} -t -p1 -R < ./libusb_enable_emulate.diff
 
       - name: Build
         run: |
                 cd libusb*/
-                ${{ env.CROSS }} && set -- $@ -aarmhf -Pcross
+                ${{ env.CROSS }} && set -- $@ -a${matrix.arch} -Pcross
                 dpkg-buildpackage $@
                 cd ../
 
