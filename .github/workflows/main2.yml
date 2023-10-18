@@ -9,15 +9,14 @@ on:
       branches: [ "main" ]
 
 jobs:
-
   debian-x86_build:
+    runs-on: ubuntu-latest
+    container: debian
     strategy:
       matrix:
         include:
           - arch: armhf
             extra_dep: crossbuild-essential-armhf
-    runs-on: ubuntu-latest
-    container: debian:lastest
 
     steps:
       - name: Fetch Repository
