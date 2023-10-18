@@ -28,7 +28,7 @@ jobs:
         uses: actions/cache@v3
 
       - name: Add architecture for dpkg if needed
-        run: ${{ matrix.arch != x86_64 || matrix.arch != x86 }} && dpkg --add-architecture ${{ matrix.arch }}
+        run: ${{ matrix.arch != 'x86_64' || matrix.arch != 'x86' }} && dpkg --add-architecture ${{ matrix.arch }}
 
       - name: Prepare for build
         uses: ConorMacBride/install-package@v1 
