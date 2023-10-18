@@ -1,0 +1,64 @@
+name: CI
+env:
+    DEV_NAME: CI-libusb
+    DEP: sudo devscripts debian-keyring pkg-config docbook docbook-dsssl libudev-dev doxygen debhelper build-essential tree
+    FetchSource: dget http://deb.debian.org/debian/pool/main/libu/libusb-1.0/libusb-1.0_1.0.24-3.dsc
+    PKG_NAME: libusb-1.0
+on:
+    push:
+      branches: [ "libusb" ]
+
+jobs:
+
+  debian-x86_build:
+    strategy:
+      matrix:
+        include:
+          - arch: armhf
+            extra_dep: crossbuild-essential-armhf
+    runs-on: ubuntu-latest
+    container: debian:lastest
+
+    steps:
+      - name: Fetch Repository
+        uses: actions/checkout@v2
+          
+      - name: Cache Primes
+        id: cache-primes
+        uses: actions/cache@v3
+
+      - name: Add architecture for dpkg if needed
+        run: ${{ matrix.arch != x86_64 || matrix.arch != x86 }} && dpkg --add-architecture ${{ matrix.arch }}
+
+      - name: Prepare for build
+        uses: ConorMacBride/install-package@v1 
+        with:
+          apt: ${{ env.DEP }} ${{ matrix.extra_dep }}
+
+
+      - name: Fetch application source
+        run: apt build-dep -a${{matrix.arch}} libusb-1.0 || ${{ env.FetchSource }}
+
+      - name: Apply patch
+        run: |
+          patch -d ${{ env.PKG_NAME }}* -t -p1 -R < *.patch
+
+      - name: Build
+        run: |
+                cd libusb*/
+                dpkg-buildpackage
+                cd ../
+
+      - name: Generate files list
+        run: |
+          tree > filelist-${{matrix.arch}}.tree
+
+      - name: Releases Files 
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: ${{ env.DEV_NAME }}-lastest
+          files: |
+            ./filelist*.tree
+            **/*.deb
+            **/*.udeb
