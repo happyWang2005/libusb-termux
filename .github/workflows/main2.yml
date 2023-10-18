@@ -14,9 +14,10 @@ jobs:
             extra_dep: crossbuild-essential-armhf
 
     env:
+        VERSION: 1.0.24-3
         CROSS: ${{ matrix.arch != 'amd64' || matrix.arch != 'i386' }}
         DEP: sudo devscripts debian-keyring pkg-config docbook docbook-dsssl libudev-dev doxygen debhelper build-essential tree
-        FetchSource: dget http://deb.debian.org/debian/pool/main/libu/libusb-1.0/libusb-1.0_1.0.24-3.dsc
+        FetchSource: dget http://deb.debian.org/debian/pool/main/libu/libusb-1.0/libusb-1.0_${{env.VERSION}}.dsc
         CONFIG_SITE: /etc/dpkg-cross/cross-config.amd64
           #DEB_BUILD_OPTIONS: nocheck
 
@@ -42,7 +43,7 @@ jobs:
         run: |
           ls
           echo "-------------------------------------------"
-          patch -d libusb* -t -p1 -R < ./*.diff
+          patch -d libusb-1.0_${{VERSION}} -t -p1 -R < ./libusb_enable_emulate.diff
 
       - name: Build
         run: |
