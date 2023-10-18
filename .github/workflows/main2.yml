@@ -30,7 +30,7 @@ jobs:
         run: ${{ matrix.arch != 'amd64' || matrix.arch != 'i386' }} && dpkg --add-architecture ${{ matrix.arch }}
 
       - name: Prepare for build
-        run: apt install ${{ env.DEP }} ${{ matrix.extra_dep }}
+        run: apt update && apt install ${{ env.DEP }} ${{ matrix.extra_dep }}
 
 
       - name: Fetch application source
