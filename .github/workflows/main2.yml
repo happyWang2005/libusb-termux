@@ -1,12 +1,4 @@
 name: CI
-env:
-    DEV_NAME: CI-libusb
-    CROSS: ${{matrix.arch != 'amd64' || matrix.arch != 'i386'}}
-    DEP: sudo devscripts debian-keyring pkg-config docbook docbook-dsssl libudev-dev doxygen debhelper build-essential tree
-    FetchSource: dget http://deb.debian.org/debian/pool/main/libu/libusb-1.0/libusb-1.0_1.0.24-3.dsc
-    PKG_NAME: libusb-1.0
-    CONFIG_SITE: /etc/dpkg-cross/cross-config.amd64
-      #DEB_BUILD_OPTIONS: nocheck
 on:
     push:
       branches: [ "main" ]
@@ -20,6 +12,13 @@ jobs:
         include:
           - arch: armhf
             extra_dep: crossbuild-essential-armhf
+
+    env:
+        CROSS: ${{ matrix.arch != 'amd64' || matrix.arch != 'i386' }}
+        DEP: sudo devscripts debian-keyring pkg-config docbook docbook-dsssl libudev-dev doxygen debhelper build-essential tree
+        FetchSource: dget http://deb.debian.org/debian/pool/main/libu/libusb-1.0/libusb-1.0_1.0.24-3.dsc
+        CONFIG_SITE: /etc/dpkg-cross/cross-config.amd64
+          #DEB_BUILD_OPTIONS: nocheck
 
     steps:
       - name: Fetch Repository
@@ -43,7 +42,7 @@ jobs:
         run: |
           ls
           echo "-------------------------------------------"
-          patch -d ${{ env.PKG_NAME }}* -t -p1 -R < ./*.diff
+          patch -d libusb* -t -p1 -R < ./*.diff
 
       - name: Build
         run: |
