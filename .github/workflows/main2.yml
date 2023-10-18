@@ -6,7 +6,7 @@ env:
     PKG_NAME: libusb-1.0
 on:
     push:
-      branches: [ "libusb" ]
+      branches: [ "main" ]
 
 jobs:
 
