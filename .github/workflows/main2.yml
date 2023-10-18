@@ -19,7 +19,7 @@ jobs:
     env:
         CROSS: ${{ matrix.arch != 'amd64' || matrix.arch != 'i386' }}
         DEP: sudo devscripts debian-keyring pkg-config docbook docbook-dsssl libudev-dev doxygen debhelper build-essential tree
-        FetchSource: dget http://deb.debian.org/debian/pool/main/libu/libusb-1.0/libusb-1.0_${{ env.VERSION }}.dsc
+        FetchSource: dget http://deb.debian.org/debian/pool/main/libu/libusb-1.0/libusb-1.0_${ env.VERSION }.dsc
         CONFIG_SITE: /etc/dpkg-cross/cross-config.amd64
           #DEB_BUILD_OPTIONS: nocheck
 
