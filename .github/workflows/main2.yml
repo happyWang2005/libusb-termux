@@ -4,7 +4,9 @@ on:
       branches: [ "main" ]
 
 env:
-    VERSION: 1.0.24-3
+    VERSION_NUM: 1.0.24
+    VERSION_STATE: 3
+    VERSION: ${VERSION_NUM}-${VERSION_STATE}
 
 jobs:
   debian-x86_build:
@@ -13,6 +15,10 @@ jobs:
     strategy:
       matrix:
         include:
+          - arch: amd64 
+          - arch: i386 
+          - arch: arm64 
+            extra_dep: crossbuild-essential-arm64
           - arch: armhf
             extra_dep: crossbuild-essential-armhf
 
