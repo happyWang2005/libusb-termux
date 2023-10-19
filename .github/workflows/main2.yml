@@ -5,6 +5,7 @@ on:
 
 env:
     VERSION: 1.0.26-1
+    PATCH_NAME: libusb_enable_emulate
 
 jobs:
   debian-x86_build:
@@ -49,19 +50,22 @@ jobs:
         run: |
           tree
           echo "-------------------------------------------"
-          cat patch/$(ls patch) | patch -d $(ls -F | grep 'libusb.*/') -tR -p2
+          set -- --quiltrc=quiltrc-dpkg
+          quilt $@ new ${{env.PATCH_NAME}}.patch
+          cd libusb*/
+          cat patch/$(ls patch) | patch -tR -p2
+          quilt $@ add ./*
+          quilt $@ refresh
           dpkg-source --commit
 
       - name: Build
         run: |
-                cd libusb*/
-                ${{ env.CROSS }} && set -- $@ -a${{ matrix.arch}} -Pcross
+                ${{ env.CROSS }} && set -- -a${{ matrix.arch}} -Pcross
                 dpkg-buildpackage $@
-                cd ../
 
       - name: Generate files list
         run: |
-          tree > filelist-${{matrix.arch}}.tree
+          tree > ../filelist-${{matrix.arch}}.tree
 
       - name: Releases Files 
         uses: "marvinpinto/action-automatic-releases@latest"
@@ -69,6 +73,7 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: libusb-1.0_${{env.VERSION}}-test-lastest
           files: |
-            ./filelist*.tree
+            **/${{env.PATCH_NAME}}.patch
+            **/filelist*.tree
             **/*.deb
             **/*.udeb
