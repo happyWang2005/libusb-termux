@@ -45,7 +45,7 @@ jobs:
         run: |
           tree
           echo "-------------------------------------------"
-          patch -d libusb-1.0_${{VERSION}} -t -p1 -R < ./libusb_enable_emulate.diff
+          ls patch | xargs cat | patch -d libusb-1.0_${{env.VERSION}} -t -p1 -R
 
       - name: Build
         run: |

@@ -1,0 +1,346 @@
+diff --color -ur old/libusb-1.0.26/libusb/core.c new/libusb-1.0.26/libusb/core.c
+--- old/libusb-1.0.26/libusb/core.c	2022-03-30 19:05:08.000000000 +0800
++++ new/libusb-1.0.26/libusb/core.c	2023-07-30 21:31:57.000000000 +0800
+@@ -2264,6 +2264,15 @@
+ }
+ #endif
+ 
++static int get_env_simulate_opt(void)
++{
++	const char *simulate = getenv("LIBUSB_SIMULATE");
++	if (simulate)
++		return LIBUSB_SIMULATE_ON;
++	else 
++		return LIBUSB_SIMULATE_OFF;
++}
++
+ /** \ingroup libusb_lib
+  * Initialize libusb. This function must be called before calling any other
+  * libusb function.
+@@ -2313,6 +2322,7 @@
+ 	if (_ctx->debug != LIBUSB_LOG_LEVEL_NONE)
+ 		_ctx->debug_fixed = 1;
+ #endif
++	_ctx->simulate_state = get_env_simulate_opt();
+ 
+ 	usbi_mutex_init(&_ctx->usb_devs_lock);
+ 	usbi_mutex_init(&_ctx->open_devs_lock);
+只在 new/libusb-1.0.26/libusb 中存在：libusb-1.0.26.tar.bz2
+diff --color -ur old/libusb-1.0.26/libusb/libusb.h new/libusb-1.0.26/libusb/libusb.h
+--- old/libusb-1.0.26/libusb/libusb.h	2022-04-09 17:07:14.000000000 +0800
++++ new/libusb-1.0.26/libusb/libusb.h	2023-07-30 21:35:23.000000000 +0800
+@@ -159,6 +159,10 @@
+  * \param x the host-endian value to convert
+  * \returns the value in little-endian byte order
+  */
++
++#define LIBUSB_SIMULATE_ON  1
++#define LIBUSB_SIMULATE_OFF  0
++
+ static inline uint16_t libusb_cpu_to_le16(const uint16_t x)
+ {
+ 	union {
+@@ -1345,6 +1349,7 @@
+ 	LIBUSB_LOG_CB_CONTEXT = (1 << 1)
+ };
+ 
++
+ /** \ingroup libusb_lib
+  * Callback function for handling log messages.
+  * \param ctx the context which is related to the log message, or NULL if it
+diff --color -ur old/libusb-1.0.26/libusb/libusbi.h new/libusb-1.0.26/libusb/libusbi.h
+--- old/libusb-1.0.26/libusb/libusbi.h	2022-03-30 19:05:08.000000000 +0800
++++ new/libusb-1.0.26/libusb/libusbi.h	2023-07-30 22:45:15.000000000 +0800
+@@ -34,6 +34,8 @@
+ #ifdef HAVE_SYS_TIME_H
+ #include <sys/time.h>
+ #endif
++#include <signal.h>
++#include <sys/signalfd.h>
+ 
+ #include "libusb.h"
+ 
+@@ -433,6 +435,7 @@
+ 	struct list_head completed_transfers;
+ 
+ 	struct list_head list;
++	int simulate_state;
+ };
+ 
+ extern struct libusb_context *usbi_default_context;
+diff --color -ur old/libusb-1.0.26/libusb/os/linux_usbfs.c new/libusb-1.0.26/libusb/os/linux_usbfs.c
+--- old/libusb-1.0.26/libusb/os/linux_usbfs.c	2022-03-30 19:05:08.000000000 +0800
++++ new/libusb-1.0.26/libusb/os/linux_usbfs.c	2023-07-31 03:14:21.000000000 +0800
+@@ -101,6 +101,10 @@
+ /* Serialize scan-devices, event-thread, and poll */
+ usbi_mutex_static_t linux_hotplug_lock = USBI_MUTEX_INITIALIZER;
+ 
++static usbi_event_t android_simulation_control_event = USBI_INVALID_EVENT;
++static pthread_t android_simulate_event_thread;
++static intptr_t usbfd;
++
+ static int linux_scan_devices(struct libusb_context *ctx);
+ static int detach_kernel_driver_and_claim(struct libusb_device_handle *, uint8_t);
+ 
+@@ -165,6 +169,8 @@
+ 	int iso_packet_offset;
+ };
+ 
++static void *android_simulate_event_thread_main(void *arg);
++
+ static int dev_has_config0(struct libusb_device *dev)
+ {
+ 	struct linux_device_priv *priv = usbi_get_device_priv(dev);
+@@ -397,6 +403,11 @@
+ 		}
+ 	}
+ 
++	if (ctx->simulate_state == 1) {
++		android_get_usbfd();
++		return android_start_simulate_event_monitor();
++	}
++
+ 	if (no_enumeration) {
+ 		return LIBUSB_SUCCESS;
+ 	}
+@@ -423,6 +434,10 @@
+ {
+ 	UNUSED(ctx);
+ 
++	if (ctx->simulate_state == 1) {
++		android_stop_simulate_event_monitor();
++	
++	}
+ 	if (no_enumeration) {
+ 		return;
+ 	}
+@@ -1163,6 +1178,203 @@
+ 	usbi_mutex_static_unlock(&active_contexts_lock);
+ }
+ 
++/* ----------android_simulate---------- */
++void android_get_usbfd(void)
++{
++	char* _usb_fd = getenv("TERMUX_USB_FD");
++	if (!_usb_fd)
++		_usb_fd = getenv("LIBUSB_USB_FD");
++	if (!_usb_fd) {
++		usbi_dbg(NULL,"environment variable \"TERMUX_USB_FD\" or \"LIBUSB_USB_FD\" not found. No clue to get usb file descriptor.");
++		
++	}
++	usbfd=(intptr_t)atoi(_usb_fd);
++	usbi_dbg(NULL,"Got usbfd %d.",usbfd);
++
++}
++
++int android_start_simulate_event_monitor(void)
++{
++	int r;
++
++	r = usbi_create_event(&android_simulation_control_event);
++	if (r) {
++		usbi_err(NULL, "failed to create simulate control event");
++		goto err;
++	}
++
++	r = pthread_create(&android_simulate_event_thread, NULL, android_simulate_event_thread_main, NULL);
++	if (r) {
++		usbi_err(NULL, "failed to create hotplug event thread (%d)", r);
++		goto err_destroy_event;
++	}
++
++	return LIBUSB_SUCCESS;
++
++err_destroy_event:
++	usbi_destroy_event(&android_simulation_control_event);
++	android_simulation_control_event = (usbi_event_t)USBI_INVALID_EVENT;
++err:
++	return LIBUSB_ERROR_OTHER;
++}
++int android_stop_simulate_event_monitor(void)
++{
++	int r;
++	/* Signal the control event and wait for the thread to exit */
++	usbi_signal_event(&android_simulation_control_event);
++	r = pthread_join(android_simulate_event_thread, NULL);
++	if (r)
++		usbi_warn(NULL, "failed to join hotplug event thread (%d)", r);
++
++	usbi_destroy_event(&android_simulation_control_event);
++	android_simulation_control_event = (usbi_event_t)USBI_INVALID_EVENT;
++
++	return LIBUSB_SUCCESS;
++}
++static void *android_simulate_event_thread_main(void *arg){
++
++	int r;
++
++	UNUSED(arg);
++#if defined(HAVE_PTHREAD_SETNAME_NP)
++	r = pthread_setname_np(pthread_self(), "libusb_event");
++	if (r)
++		usbi_warn(NULL, "failed to set hotplug event thread name, error=%d", r);
++#endif
++	android_simulate_hotplug_event(SIG_USB_IN,usbfd);
++	sigset_t mask;
++	sigemptyset(&mask);
++
++	//
++	sigaddset(&mask, SIG_USB_IN);
++	sigaddset(&mask, SIG_USB_OUT);
++
++	sigprocmask(SIG_BLOCK, &mask, NULL);
++	//get SignalFD
++	int signal_fd = signalfd(-1, &mask, 0);
++	struct pollfd fds[] = {
++		{ .fd = USBI_EVENT_OS_HANDLE(&android_simulation_control_event),
++		  .events = USBI_EVENT_POLL_EVENTS },
++		{ .fd = signal_fd,
++		  .events = POLLIN },
++	};
++
++	struct signalfd_siginfo siginfo;
++
++	while (1) {
++		r = poll(fds, 2, -1);
++		if (r == -1) {
++			/* check for temporary failure */
++			if (errno == EINTR)
++				continue;
++			usbi_err(NULL, "poll() failed, errno=%d", errno);
++			break;
++		}
++		if (fds[0].revents) {
++			/* activity on control event, exit */
++			usbi_dbg(NULL,"activity on control event, exit");
++			break;
++		}
++		if (fds[1].revents) {
++			usbi_mutex_static_lock(&linux_hotplug_lock);
++			read(&signalfd, &siginfo, sizeof(struct signalfd_siginfo));
++			android_simulate_hotplug_event(siginfo.ssi_signo,usbfd);
++			usbi_mutex_static_unlock(&linux_hotplug_lock);
++		}
++	}
++	usbi_dbg(NULL,"simulated-event thread exiting");
++	return NULL;
++}
++
++
++void android_simulate_hotplug_event(uint32_t signo,intptr_t sys_dev){
++	if (signo==SIG_USB_OUT)
++	{
++		usbi_dbg(NULL,"received signal SIG_USB_OUT %g",signo);
++	android_simulate_device_disconnected();
++	}else {
++		usbi_dbg(NULL,"received signal SIG_USB_IN %g",signo);
++	android_hotplug_enumerate(sys_dev);
++	}
++}
++void android_hotplug_enumerate(intptr_t sys_dev)
++{
++	struct libusb_context *ctx;
++
++	usbi_mutex_static_lock(&active_contexts_lock);
++	for_each_context(ctx) {
++		android_enumerate_device(ctx,sys_dev);
++	}
++	usbi_mutex_static_unlock(&active_contexts_lock);
++}
++int android_enumerate_device(struct libusb_context *ctx,
++	intptr_t sys_dev) // wrap_sys_dev
++{
++	unsigned long session_id;
++
++	//struct android_device_handle_priv *hpriv = usbi_get_device_handle_priv(handle);
++	int fd = (int)sys_dev;
++	uint8_t busnum, devaddr;
++	struct usbfs_connectinfo ci;
++	struct libusb_device *dev;
++	int r;
++
++	r = linux_get_device_address(ctx, 1, &busnum, &devaddr, NULL, NULL, fd);
++	if (r < 0) {
++		r = ioctl(fd, IOCTL_USBFS_CONNECTINFO, &ci);
++		if (r < 0) {
++			usbi_err(ctx, "connectinfo failed, errno=%d", errno);
++			return LIBUSB_ERROR_IO;
++		}
++		/* There is no ioctl to get the bus number. We choose 0 here
++		 * as linux starts numbering buses from 1. */
++		busnum = 0;
++		devaddr = ci.devnum;
++	}
++	/* FIXME: session ID is not guaranteed unique as addresses can wrap and
++	 * will be reused. instead we should add a simple sysfs attribute with
++	 * a session ID. */
++	session_id = busnum << 8 | devaddr;
++	usbi_dbg(ctx, "busnum %u devaddr %u session_id %lu", busnum, devaddr, session_id);
++
++	dev = usbi_get_device_by_session_id(ctx, session_id);
++	if (dev) {
++		/* device already exists in the context */
++		usbi_dbg(ctx, "session_id %lu already exists", session_id);
++		libusb_unref_device(dev);
++		return LIBUSB_SUCCESS;
++	}
++
++	usbi_dbg(ctx, "allocating new device for %u/%u (session %lu)",
++		 busnum, devaddr, session_id);
++	dev = usbi_alloc_device(ctx, session_id);
++	if (!dev)
++		return LIBUSB_ERROR_NO_MEM;
++
++	r = initialize_device(dev, busnum, devaddr, NULL, fd);
++	if (r < 0)
++		goto out;
++	r = usbi_sanitize_device(dev);
++	if (r < 0)
++		goto out;
++
++	//r = android_get_parent_info(dev, sysfs_dir);
++out:
++	if (r < 0)
++		libusb_unref_device(dev);
++	else
++		usbi_connect_device(dev);
++	return r;
++
++}
++
++void android_simulate_device_disconnected()
++{
++	uint8_t busnum, devaddr;
++	linux_get_device_address(NULL, 1, &busnum, &devaddr, NULL, NULL, usbfd);
++	linux_device_disconnected(busnum, devaddr);
++}
++
+ #if !defined(HAVE_LIBUDEV)
+ static int parse_u8(const char *str, uint8_t *val_p)
+ {
+diff --color -ur old/libusb-1.0.26/libusb/os/linux_usbfs.h new/libusb-1.0.26/libusb/os/linux_usbfs.h
+--- old/libusb-1.0.26/libusb/os/linux_usbfs.h	2021-10-16 03:23:30.000000000 +0800
++++ new/libusb-1.0.26/libusb/os/linux_usbfs.h	2023-07-30 22:35:06.000000000 +0800
+@@ -27,6 +27,9 @@
+ #define SYSFS_MOUNT_PATH	"/sys"
+ #define SYSFS_DEVICE_PATH	SYSFS_MOUNT_PATH "/bus/usb/devices"
+ 
++#define SIG_USB_IN              SIGUSR1
++#define SIG_USB_OUT             SIGUSR2
++
+ struct usbfs_ctrltransfer {
+ 	/* keep in sync with usbdevice_fs.h:usbdevfs_ctrltransfer */
+ 	__u8 bmRequestType;
+@@ -208,4 +211,12 @@
+ int linux_enumerate_device(struct libusb_context *ctx,
+ 	uint8_t busnum, uint8_t devaddr, const char *sysfs_dir);
+ 
++void android_get_usbfd(void);
++int android_start_simulate_event_monitor(void);
++int android_stop_simulate_event_monitor(void);
++void android_simulate_hotplug_event(uint32_t signo,intptr_t sys_dev);
++void android_hotplug_enumerate(intptr_t sys_dev);
++int android_enumerate_device(struct libusb_context *ctx,
++	intptr_t sys_dev);
++void android_simulate_device_disconnected(void);
+ #endif
