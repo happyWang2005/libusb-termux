@@ -4,9 +4,7 @@ on:
       branches: [ "main" ]
 
 env:
-    VERSION_NUM: 1.0.24
-    VERSION_STATE: 3
-    VERSION: ${VERSION_NUM}-${VERSION_STATE}
+    VERSION: 1.0.24-3
 
 jobs:
   debian-x86_build:
@@ -51,7 +49,7 @@ jobs:
         run: |
           tree
           echo "-------------------------------------------"
-          sh -c "ls patch | xargs cat | patch -d libusb-1.0_[0-9]*.[0~9]*.*[0-9] -t -p1 -R"
+          sh -c "ls patch | xargs cat | patch -d $(ls --only-dirs | grep 'libusb-1.0') -tR -p1"
 
       - name: Build
         run: |
