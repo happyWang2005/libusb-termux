@@ -49,7 +49,7 @@ jobs:
         run: |
           tree
           echo "-------------------------------------------"
-          sh -c "ls patch | xargs cat | patch -d $(ls --only-dirs | grep 'libusb-1.0') -tR -p1"
+          sh -c "cat patch/$(ls patch) | patch -d $(ls --only-dirs | grep 'libusb-1.0') -tR -p1"
 
       - name: Build
         run: |
