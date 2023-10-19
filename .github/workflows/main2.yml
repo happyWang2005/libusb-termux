@@ -49,7 +49,7 @@ jobs:
         run: |
           tree
           echo "-------------------------------------------"
-          cat patch/$(ls patch) | patch -d $(ls -F | grep 'libusb.*/')/libusb -tR -p1
+          cat patch/$(ls patch) | patch -d $(ls -F | grep 'libusb.*/') -tR -p2
 
       - name: Build
         run: |
