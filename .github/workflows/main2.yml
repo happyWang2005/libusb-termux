@@ -51,7 +51,7 @@ jobs:
           tree
           echo "-------------------------------------------"
           
-          quilt --quiltrc=quiltrc-dpkg new ${{ env.PATCH_NAME }}.patch
+          quilt --quiltrc=quiltrc-dpkg new test.patch
           echo "quilt new finished."
           cd libusb*/
           cat patch/* | patch -tR -p2
