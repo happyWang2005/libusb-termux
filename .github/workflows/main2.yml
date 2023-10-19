@@ -25,6 +25,7 @@ jobs:
         CROSS: ${{ matrix.arch != 'amd64' || matrix.arch != 'i386' }}
         DEP: sudo devscripts debian-keyring pkg-config docbook docbook-dsssl libudev-dev doxygen debhelper build-essential tree
         FetchSource: dget http://deb.debian.org/debian/pool/main/libu/libusb-1.0/libusb-1.0_${VERSION}.dsc
+        QUILT_PATCHES: debian/patches
         CONFIG_SITE: /etc/dpkg-cross/cross-config.amd64
           #DEB_BUILD_OPTIONS: nocheck
 
@@ -48,20 +49,10 @@ jobs:
 
       - name: Apply patch
         run: |
-          tree
           echo "-------------------------------------------"
-          
-          quilt --quiltrc=quiltrc-dpkg new test.patch
-          echo "quilt new finished."
           cd libusb*/
-          cat patch/* | patch -tR -p2
-          echo "apply patch finished"
-          quilt --quiltrc=quiltrc-dpkg add ./*
-          echo "quilt add finished"
-          quilt --quiltrc=quiltrc-dpkg refresh
-          echo "quilt refresh finished"
-          dpkg-source --commit
-          echo "dpkg-source --commit finished"
+          echo "changed directory to libusb*"
+          quilt --quiltrc=${{github.action_path}}/quiltrc-dpkg  import ${{github.action_path}}/patches/*
 
       - name: Build
         run: |

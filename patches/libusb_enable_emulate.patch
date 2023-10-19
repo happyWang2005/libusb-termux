@@ -1,6 +1,7 @@
-diff --color -ur old/libusb-1.0.26/libusb/core.c new/libusb-1.0.26/libusb/core.c
---- old/libusb-1.0.26/libusb/core.c	2022-03-30 19:05:08.000000000 +0800
-+++ new/libusb-1.0.26/libusb/core.c	2023-07-30 21:31:57.000000000 +0800
+Index: libusb-1.0.26/libusb/core.c
+===================================================================
+--- libusb-1.0.26.orig/libusb/core.c	2022-03-30 19:05:08.000000000 +0800
++++ libusb-1.0.26/libusb/core.c	2023-10-19 23:58:39.790090494 +0800
 @@ -2264,6 +2264,15 @@
  }
  #endif
@@ -25,10 +26,10 @@ diff --color -ur old/libusb-1.0.26/libusb/core.c new/libusb-1.0.26/libusb/core.c
  
  	usbi_mutex_init(&_ctx->usb_devs_lock);
  	usbi_mutex_init(&_ctx->open_devs_lock);
-只在 new/libusb-1.0.26/libusb 中存在：libusb-1.0.26.tar.bz2
-diff --color -ur old/libusb-1.0.26/libusb/libusb.h new/libusb-1.0.26/libusb/libusb.h
---- old/libusb-1.0.26/libusb/libusb.h	2022-04-09 17:07:14.000000000 +0800
-+++ new/libusb-1.0.26/libusb/libusb.h	2023-07-30 21:35:23.000000000 +0800
+Index: libusb-1.0.26/libusb/libusb.h
+===================================================================
+--- libusb-1.0.26.orig/libusb/libusb.h	2022-04-09 17:07:14.000000000 +0800
++++ libusb-1.0.26/libusb/libusb.h	2023-10-19 23:58:39.806090494 +0800
 @@ -159,6 +159,10 @@
   * \param x the host-endian value to convert
   * \returns the value in little-endian byte order
@@ -48,9 +49,10 @@ diff --color -ur old/libusb-1.0.26/libusb/libusb.h new/libusb-1.0.26/libusb/libu
  /** \ingroup libusb_lib
   * Callback function for handling log messages.
   * \param ctx the context which is related to the log message, or NULL if it
-diff --color -ur old/libusb-1.0.26/libusb/libusbi.h new/libusb-1.0.26/libusb/libusbi.h
---- old/libusb-1.0.26/libusb/libusbi.h	2022-03-30 19:05:08.000000000 +0800
-+++ new/libusb-1.0.26/libusb/libusbi.h	2023-07-30 22:45:15.000000000 +0800
+Index: libusb-1.0.26/libusb/libusbi.h
+===================================================================
+--- libusb-1.0.26.orig/libusb/libusbi.h	2022-03-30 19:05:08.000000000 +0800
++++ libusb-1.0.26/libusb/libusbi.h	2023-10-19 23:58:39.822090494 +0800
 @@ -34,6 +34,8 @@
  #ifdef HAVE_SYS_TIME_H
  #include <sys/time.h>
@@ -68,9 +70,10 @@ diff --color -ur old/libusb-1.0.26/libusb/libusbi.h new/libusb-1.0.26/libusb/lib
  };
  
  extern struct libusb_context *usbi_default_context;
-diff --color -ur old/libusb-1.0.26/libusb/os/linux_usbfs.c new/libusb-1.0.26/libusb/os/linux_usbfs.c
---- old/libusb-1.0.26/libusb/os/linux_usbfs.c	2022-03-30 19:05:08.000000000 +0800
-+++ new/libusb-1.0.26/libusb/os/linux_usbfs.c	2023-07-31 03:14:21.000000000 +0800
+Index: libusb-1.0.26/libusb/os/linux_usbfs.c
+===================================================================
+--- libusb-1.0.26.orig/libusb/os/linux_usbfs.c	2022-03-30 19:05:08.000000000 +0800
++++ libusb-1.0.26/libusb/os/linux_usbfs.c	2023-10-19 23:58:39.846090494 +0800
 @@ -101,6 +101,10 @@
  /* Serialize scan-devices, event-thread, and poll */
  usbi_mutex_static_t linux_hotplug_lock = USBI_MUTEX_INITIALIZER;
@@ -318,9 +321,10 @@ diff --color -ur old/libusb-1.0.26/libusb/os/linux_usbfs.c new/libusb-1.0.26/lib
  #if !defined(HAVE_LIBUDEV)
  static int parse_u8(const char *str, uint8_t *val_p)
  {
-diff --color -ur old/libusb-1.0.26/libusb/os/linux_usbfs.h new/libusb-1.0.26/libusb/os/linux_usbfs.h
---- old/libusb-1.0.26/libusb/os/linux_usbfs.h	2021-10-16 03:23:30.000000000 +0800
-+++ new/libusb-1.0.26/libusb/os/linux_usbfs.h	2023-07-30 22:35:06.000000000 +0800
+Index: libusb-1.0.26/libusb/os/linux_usbfs.h
+===================================================================
+--- libusb-1.0.26.orig/libusb/os/linux_usbfs.h	2021-10-16 03:23:30.000000000 +0800
++++ libusb-1.0.26/libusb/os/linux_usbfs.h	2023-10-19 23:58:39.858090494 +0800
 @@ -27,6 +27,9 @@
  #define SYSFS_MOUNT_PATH	"/sys"
  #define SYSFS_DEVICE_PATH	SYSFS_MOUNT_PATH "/bus/usb/devices"
