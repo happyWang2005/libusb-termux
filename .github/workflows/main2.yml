@@ -23,7 +23,7 @@ jobs:
 
     env:
         CROSS: ${{ matrix.arch != 'amd64' || matrix.arch != 'i386' }}
-        DEP: sudo devscripts debian-keyring pkg-config docbook docbook-dsssl libudev-dev doxygen debhelper build-essential tree
+        DEP: sudo devscripts debian-keyring pkg-config docbook docbook-dsssl libudev-dev doxygen debhelper build-essential quilt tree
         FetchSource: dget http://deb.debian.org/debian/pool/main/libu/libusb-1.0/libusb-1.0_${VERSION}.dsc
         QUILT_PATCHES: debian/patches
         CONFIG_SITE: /etc/dpkg-cross/cross-config.amd64
