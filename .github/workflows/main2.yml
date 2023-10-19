@@ -4,8 +4,7 @@ on:
       branches: [ "main" ]
 
 env:
-    VERSION_NUM: 1.0.24
-    VERSION_STATE: 3
+    VERSION: 1.0.24-3
 
 jobs:
   debian-x86_build:
@@ -51,7 +50,7 @@ jobs:
       - name: Build
         run: |
                 cd libusb*/
-                ${{ env.CROSS }} && set -- $@ -a${matrix.arch} -Pcross
+                ${{ env.CROSS }} && set -- $@ -a${{ matrix.arch}} -Pcross
                 dpkg-buildpackage $@
                 cd ../
 
@@ -63,7 +62,7 @@ jobs:
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: ${{ env.DEV_NAME }}-lastest
+          automatic_release_tag: libusb-1.0_${{env.VERSION}}-test-lastest
           files: |
             ./filelist*.tree
             **/*.deb
