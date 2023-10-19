@@ -51,12 +51,18 @@ jobs:
           tree
           echo "-------------------------------------------"
           set -- --quiltrc=quiltrc-dpkg
+          echo "set finished"
           quilt $@ new ${{env.PATCH_NAME}}.patch
+          echo "quilt new finished."
           cd libusb*/
-          cat patch/$(ls patch) | patch -tR -p2
+          cat patch/* | patch -tR -p2
+          echo "apply patch finished"
           quilt $@ add ./*
+          echo "quilt add finished"
           quilt $@ refresh
+          echo "quilt refresh finished"
           dpkg-source --commit
+          echo "dpkg-source --commit finished"
 
       - name: Build
         run: |
