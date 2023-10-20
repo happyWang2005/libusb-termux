@@ -64,6 +64,8 @@ jobs:
 
       - name: Build
         run: |
+                echo ${PWD}
+                test -d ./debian
                 ${{ env.CROSS }} && set -- -a${{ matrix.arch}} -Pcross
                 dpkg-buildpackage $@
 
