@@ -83,3 +83,4 @@ jobs:
           replacesArtifacts: false
           token: ${{ secrets.GITHUB_TOKEN }}
           artifacts: "filelist*.tree,**/*.deb,**/*.udeb"
+          allowUpdates: true
