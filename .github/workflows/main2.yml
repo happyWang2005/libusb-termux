@@ -57,7 +57,7 @@ jobs:
           echo "github.action_path :${{ github.action_path }}"
           quilt --quiltrc=../quiltrc-dpkg  import $(ls ../patches|sed 's|.*|../patches/&|g')
           echo "github.action_path :${{ github.action_path }}"
-          dpkg-buildpackage --commit
+          #dpkg-buildpackage --commit
 
       - name: Build
         run: |
