@@ -64,9 +64,7 @@ jobs:
 
       - name: Build
         run: |
-                echo "PWD: ${PWD}"
-                env
-                ls
+                cd libusb*/
                 set --
                 ${{ env.CROSS }} && set -- -a${{ matrix.arch}} -Pcross
                 dpkg-buildpackage $@
