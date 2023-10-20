@@ -55,9 +55,9 @@ jobs:
           cd libusb*/
           echo "changed directory to ${PWD}"
           echo github.action_path :${{ github.action_path }}
-          printf "HOME contents:%s" $(ls ${{github.action_path}})
-          echo HOME :${HOME}
-          printf "HOME contents:%s" $(ls ${HOME})
+          printf "github.action_path contents:%s\n" $(ls ${{github.action_path}})
+          echo "HOME :${HOME}"
+          printf "HOME contents:%s\n" $(ls ${HOME})
           quilt --quiltrc=../quiltrc-dpkg  import $(ls ../patches|sed 's|.*|../patches/&|g')
           echo github.action_path :${{ github.action_path }}
           #dpkg-buildpackage --comm
