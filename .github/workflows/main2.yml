@@ -52,7 +52,10 @@ jobs:
           echo "-------------------------------------------"
           cd libusb*/
           echo "changed directory to libusb*"
-          quilt --quiltrc=${{ github.action_path }}/quiltrc-dpkg  import ${{ github.action_path }}/patches
+          echo ${{ github.action_path }}
+          echo ${{ github.action_path }}
+          quilt --quiltrc=${{ github.action_path }}/quiltrc-dpkg  import ../patches
+          echo ${{ github.action_path }}
 
       - name: Build
         run: |
