@@ -55,8 +55,9 @@ jobs:
           echo "changed directory to libusb*"
           echo "github.action_path :${{ github.action_path }}"
           echo "github.action_path :${{ github.action_path }}"
-          quilt --quiltrc=../quiltrc-dpkg  import $(ls patches|sed 's|.*|../&|g')
+          quilt --quiltrc=../quiltrc-dpkg  import $(ls ../patches|sed 's|.*|../&|g')
           echo "github.action_path :${{ github.action_path }}"
+          dpkg-buildpackage --commit
 
       - name: Build
         run: |
