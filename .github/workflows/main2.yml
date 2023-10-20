@@ -52,7 +52,7 @@ jobs:
           echo "-------------------------------------------"
           cd libusb*/
           echo "changed directory to libusb*"
-          quilt --quiltrc=${{ github.action_path }}/quiltrc-dpkg  import ${{ github.action_path }}/patches/*
+          quilt --quiltrc=${{ github.action_path }}/quiltrc-dpkg  import ${{ github.action_path }}/patches
 
       - name: Build
         run: |
@@ -69,7 +69,6 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: libusb-1.0_${{env.VERSION}}-test-lastest
           files: |
-            **/${{env.PATCH_NAME}}.patch
             **/filelist*.tree
             **/*.deb
             **/*.udeb
