@@ -65,7 +65,8 @@ jobs:
       - name: Build
         run: |
                 echo "PWD: ${PWD}"
-                test -d ./debian && echo "Dir debian exists."
+                env
+                ls
                 set --
                 ${{ env.CROSS }} && set -- -a${{ matrix.arch}} -Pcross
                 dpkg-buildpackage $@
