@@ -76,7 +76,7 @@ jobs:
           tree > filelist-${{matrix.arch}}.tree
 
       - name: Releases Files 
-        uses: ncipollo/release-action@latest
+        uses: ncipollo/release-action@v1
         with:
           tag: "V0.0.1-test"
           prerelease: true
