@@ -18,6 +18,7 @@ jobs:
         include:
           - arch: amd64 
           - arch: i386 
+            extra_dep: libudev-dev:i386
           - arch: arm64 
             extra_dep: crossbuild-essential-arm64 libudev-dev:arm64
           - arch: armhf
