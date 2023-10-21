@@ -19,9 +19,9 @@ jobs:
           - arch: amd64 
           - arch: i386 
           - arch: arm64 
-            extra_dep: crossbuild-essential-arm64 libudev-dev
+            extra_dep: crossbuild-essential-arm64 libudev-dev:arm64
           - arch: armhf
-            extra_dep: crossbuild-essential-armhf libudev-dev
+            extra_dep: crossbuild-essential-armhf libudev-dev:armhf
 
     env:
         CROSS: ${{ matrix.arch != 'amd64' || matrix.arch != 'i386' }}
